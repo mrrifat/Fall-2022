@@ -7,418 +7,291 @@
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Inter font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --card-bg: rgba(255,255,255,0.9);
-    }
-    html, body {
-      height: 100%;
-      font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
-    }
-
-    .calendar-grid {
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-    }
-
-    /* Modal scrollbar */
-    #modal-events::-webkit-scrollbar {
-      width: 10px;
-    }
-    #modal-events::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    #modal-events::-webkit-scrollbar-thumb {
-      background: rgba(148,163,184,0.6);
-      border-radius: 6px;
-    }
-
-    /* Smooth card shadow */
-    .soft-shadow {
-      box-shadow: 0 6px 18px rgba(15,23,42,0.06), 0 2px 6px rgba(15,23,42,0.04);
-    }
-
-    /* Truncate multi-line */
-    .truncate-2 {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    /* Modal transitions */
-    .transition-scale {
-      transition: transform 180ms ease, opacity 180ms ease;
-    }
+    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; }
+    .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    .day-cell { min-height: 78px; }
+    /* modal scrollbar */
+    #modal-events::-webkit-scrollbar { width: 8px; }
+    #modal-events::-webkit-scrollbar-thumb { background: rgba(100,116,139,.4); border-radius:6px; }
+    /* small helper */
+    .truncate-1 { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   </style>
 </head>
 <body>
-  <div class="min-h-screen flex items-start justify-center py-12 px-4">
-    <div class="w-full max-w-6xl">
-      <header class="mb-6">
-        <div class="flex items-center justify-between gap-4">
+  <div class="max-w-4xl mx-auto p-4">
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b">
+        <div class="flex items-center gap-3">
+          <button id="prev-month" class="p-2 rounded-md hover:bg-gray-100" title="Previous month">
+            <svg class="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          </button>
           <div>
-            <h1 class="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Class Schedule Calendar</h1>
-            <p class="text-sm text-slate-500">Sichuan University — International Business Management</p>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <button id="prev-month" aria-label="Previous month" class="p-2 rounded-lg bg-white soft-shadow hover:translate-x-0.5 transform transition">
-              <!-- Left chevron -->
-              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </button>
-
-            <button id="today" class="px-3 py-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-semibold rounded-lg shadow hover:from-indigo-600 hover:to-blue-600 transition">
-              Today
-            </button>
-
-            <button id="next-month" aria-label="Next month" class="p-2 rounded-lg bg-white soft-shadow hover:-translate-x-0.5 transform transition">
-              <!-- Right chevron -->
-              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main class="bg-white rounded-2xl soft-shadow overflow-hidden">
-        <!-- Elegant header with month/year -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <div>
-            <h2 id="month-year" class="text-lg md:text-xl font-bold text-slate-800"></h2>
-            <p id="month-sub" class="text-sm text-slate-500 mt-0.5">Click a day to see details</p>
-          </div>
-          <div class="text-sm text-slate-500">
-            <span id="range-summary"></span>
+            <div id="month-year" class="text-sm font-semibold text-gray-800"></div>
+            <div id="range-summary" class="text-xs text-gray-500">Click a day to view events</div>
           </div>
         </div>
 
-        <!-- Week days -->
-        <div class="grid calendar-grid text-center text-xs md:text-sm font-medium text-slate-500 uppercase tracking-wider px-3 py-2 bg-slate-50">
-          <div>Sun</div>
-          <div>Mon</div>
-          <div>Tue</div>
-          <div>Wed</div>
-          <div>Thu</div>
-          <div>Fri</div>
-          <div>Sat</div>
+        <div class="flex items-center gap-2">
+          <button id="today" class="text-xs px-3 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Today</button>
+          <button id="next-month" class="p-2 rounded-md hover:bg-gray-100" title="Next month">
+            <svg class="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
+      </div>
 
-        <!-- Days -->
-        <div id="calendar-grid" class="grid calendar-grid gap-3 p-4 bg-transparent">
-          <!-- JS populates -->
-        </div>
-      </main>
+      <div class="grid calendar-grid text-center text-xs font-medium text-gray-500 bg-gray-50 px-3 py-2">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
 
-      <footer class="mt-5 text-center text-sm text-slate-500">
-        <p>Made by Rokon</p>
-      </footer>
+      <div id="calendar-grid" class="grid calendar-grid gap-2 p-3">
+        <!-- days generated by JS -->
+      </div>
     </div>
+
+    <p class="mt-3 text-center text-xs text-gray-500">Sichuan University — International Business Management. Made by Rokon</p>
   </div>
 
-  <!-- Event Modal -->
-  <div id="event-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/50">
-    <div id="modal-content" class="w-full max-w-lg bg-white rounded-2xl soft-shadow transform transition-scale opacity-0 scale-95 overflow-hidden">
-      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+  <!-- Modal -->
+  <div id="event-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div id="modal-content" class="w-full max-w-md bg-white rounded-lg shadow transform transition duration-150 opacity-0 scale-95 overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 border-b">
         <div>
-          <h3 id="modal-date" class="text-lg font-bold text-slate-800"></h3>
-          <p id="modal-sub" class="text-sm text-slate-500 mt-0.5"></p>
+          <div id="modal-date" class="text-sm font-semibold text-gray-800"></div>
+          <div id="modal-sub" class="text-xs text-gray-500"></div>
         </div>
-        <button id="close-modal" class="p-2 rounded-full text-slate-500 hover:bg-slate-100">
-          <!-- X icon -->
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+        <button id="close-modal" class="p-2 rounded-md text-gray-600 hover:bg-gray-100">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
       </div>
-      <div id="modal-events" class="p-5 max-h-[60vh] overflow-y-auto">
-        <!-- Events inserted here -->
+      <div id="modal-events" class="p-4 max-h-64 overflow-y-auto text-sm">
+        <!-- event cards -->
       </div>
     </div>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // -----------------------
-      // Data (kept from original schedule)
-      // -----------------------
-      const pad = (n) => String(n).padStart(2, '0');
+      // --- Data (kept from original schedule) ---
+      const pad = n => String(n).padStart(2,'0');
+      const crm = ['9/11','9/18','9/25','10/16','10/23','10/30','11/6','11/13','11/20','11/27','12/4','12/11'];
+      const macro = crm.slice();
+      const market = ['9/10','9/17','9/24','10/15','10/22','10/29','11/5','11/12','11/19','11/26','12/3','12/10'];
+      const lit = ['9/22','9/29','10/13','10/20'];
+      const bm = ['9/19','10/13','10/15','10/17','10/20','10/21'];
 
-      const crmDates = ['9/11', '9/18', '9/25', '10/16', '10/23', '10/30', '11/6', '11/13', '11/20', '11/27', '12/4', '12/11'];
-      const macroDates = crmDates.slice();
-      const marketSurveyDates = ['9/10', '9/17', '9/24', '10/15', '10/22', '10/29', '11/5', '11/12', '11/19', '11/26', '12/3', '12/10'];
-      const litDates = ['9/22', '9/29', '10/13', '10/20'];
-      const bmDates = ['9/19', '10/13', '10/15', '10/17', '10/20', '10/21'];
-
-      function buildEventsFor(dates, year, common) {
-        return dates.map(d => {
-          const [m, day] = d.split('/').map(Number);
-          const iso = `${year}-${pad(m)}-${pad(day)}`;
-          return Object.assign({ dateISO: iso }, common);
+      function build(dates, year, meta) {
+        return dates.map(s => {
+          const [m, day] = s.split('/').map(Number);
+          return Object.assign({ dateISO: `${year}-${pad(m)}-${pad(day)}` }, meta);
         });
       }
 
-      const YEAR = 2025; // keep the 2025 schedule dates
+      const YEAR = 2025;
       const events = [
-        ...buildEventsFor(crmDates, YEAR, { title: 'Customer Relation Management', time: '18:30 - 21:30', location: '402', instructor: '廖成城', color: 'blue' })
-          .map(e => (e.dateISO === `${YEAR}-09-18` ? Object.assign({}, e, { time: '19:00 - 21:30', location: '206' }) : e)),
-        ...buildEventsFor(macroDates, YEAR, { title: 'Macroeconomics', time: '14:00 - 17:00', location: '510', instructor: '王克', color: 'green' }),
-        ...buildEventsFor(marketSurveyDates, YEAR, { title: 'Market Survey', time: '09:00 - 12:00', location: '106', instructor: '靳菲', color: 'yellow' }),
-        ...buildEventsFor(litDates, YEAR, { title: 'Literature Reviewing and Thesis Writing', time: '19:00 - 22:00', location: '406', instructor: '刘锐', color: 'purple' }),
-        ...buildEventsFor(bmDates, YEAR, { title: 'Business Model and Enterprise Innovation', time: '13:00 - 17:00', location: '302', instructor: '孙含林', color: 'red' })
+        ...build(crm, YEAR, { title: 'Customer Relation Management', time: '18:30 - 21:30', location: '402', instructor: '廖成城', color: 'blue' })
+          .map(e => e.dateISO === `${YEAR}-09-18` ? Object.assign({}, e, { time: '19:00 - 21:30', location: '206' }) : e),
+        ...build(macro, YEAR, { title: 'Macroeconomics', time: '14:00 - 17:00', location: '510', instructor: '王克', color: 'green' }),
+        ...build(market, YEAR, { title: 'Market Survey', time: '09:00 - 12:00', location: '106', instructor: '靳菲', color: 'amber' }),
+        ...build(lit, YEAR, { title: 'Literature Reviewing and Thesis Writing', time: '19:00 - 22:00', location: '406', instructor: '刘锐', color: 'purple' }),
+        ...build(bm, YEAR, { title: 'Business Model and Enterprise Innovation', time: '13:00 - 17:00', location: '302', instructor: '孙含林', color: 'red' })
       ];
 
-      // Normalize into eventsByDate keyed by Date.toDateString()
-      const eventsByDate = events.reduce((acc, e) => {
+      // map by date string
+      const eventsByDate = events.reduce((acc,e) => {
         const d = new Date(e.dateISO + 'T00:00:00');
-        const key = d.toDateString();
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(Object.assign({}, e, { date: d }));
+        const k = d.toDateString();
+        acc[k] = acc[k] || [];
+        acc[k].push(Object.assign({}, e, { dateObj: d }));
         return acc;
       }, {});
-      // Sort events by time for each day
-      Object.values(eventsByDate).forEach(arr => arr.sort((a, b) => (a.time || '').localeCompare(b.time || '')));
+      Object.values(eventsByDate).forEach(arr => arr.sort((a,b) => (a.time||'').localeCompare(b.time||'')));
 
-      // Color mapping
-      const colorClasses = {
-        blue: { badge: 'bg-blue-100 text-blue-800', border: 'border-blue-400' },
-        green: { badge: 'bg-green-100 text-green-800', border: 'border-green-400' },
-        yellow: { badge: 'bg-yellow-100 text-amber-800', border: 'border-amber-400' },
-        purple: { badge: 'bg-purple-100 text-purple-800', border: 'border-purple-400' },
-        red: { badge: 'bg-red-100 text-red-800', border: 'border-red-400' }
+      const colorMap = {
+        blue: 'bg-blue-100 text-blue-800 border-blue-300',
+        green: 'bg-green-100 text-green-800 border-green-300',
+        amber: 'bg-amber-100 text-amber-800 border-amber-300',
+        purple: 'bg-purple-100 text-purple-800 border-purple-300',
+        red: 'bg-red-100 text-red-800 border-red-300'
       };
 
-      // -----------------------
-      // Calendar state & elements
-      // -----------------------
+      // --- DOM refs ---
       const monthYearEl = document.getElementById('month-year');
-      const monthSubEl = document.getElementById('month-sub');
-      const calendarGridEl = document.getElementById('calendar-grid');
       const rangeSummaryEl = document.getElementById('range-summary');
-
-      const prevMonthBtn = document.getElementById('prev-month');
-      const nextMonthBtn = document.getElementById('next-month');
+      const grid = document.getElementById('calendar-grid');
+      const prevBtn = document.getElementById('prev-month');
+      const nextBtn = document.getElementById('next-month');
       const todayBtn = document.getElementById('today');
 
-      // Modal elements
-      const eventModal = document.getElementById('event-modal');
+      const modal = document.getElementById('event-modal');
       const modalContent = document.getElementById('modal-content');
-      const closeModalBtn = document.getElementById('close-modal');
-      const modalDateEl = document.getElementById('modal-date');
-      const modalSubEl = document.getElementById('modal-sub');
-      const modalEventsEl = document.getElementById('modal-events');
+      const closeModal = document.getElementById('close-modal');
+      const modalDate = document.getElementById('modal-date');
+      const modalSub = document.getElementById('modal-sub');
+      const modalEvents = document.getElementById('modal-events');
 
-      // Start showing the user's current month (not fixed to September)
-      let currentDate = new Date();
+      // Start on user's current month
+      let current = new Date();
 
-      // -----------------------
-      // Render functions
-      // -----------------------
-      function renderCalendar() {
-        calendarGridEl.innerHTML = '';
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+      function render() {
+        grid.innerHTML = '';
+        const y = current.getFullYear();
+        const m = current.getMonth();
 
-        // Header
-        monthYearEl.textContent = currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-        monthSubEl.textContent = `Month view — ${currentDate.toLocaleString('en-US', { month: 'long' })} ${year}`;
+        monthYearEl.textContent = current.toLocaleString(undefined, { month: 'long', year: 'numeric' });
 
-        // Summary: count events this month (from schedule)
-        const startOfMonth = new Date(year, month, 1);
-        const endOfMonth = new Date(year, month + 1, 0);
-        let count = 0;
-        for (let d = new Date(startOfMonth); d <= endOfMonth; d.setDate(d.getDate() + 1)) {
-          const key = new Date(d).toDateString();
-          if (eventsByDate[key]) count += eventsByDate[key].length;
+        // count events in month
+        const start = new Date(y, m, 1), end = new Date(y, m+1, 0);
+        let cnt = 0;
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+          const k = new Date(d).toDateString();
+          if (eventsByDate[k]) cnt += eventsByDate[k].length;
         }
-        rangeSummaryEl.textContent = `${count} event${count !== 1 ? 's' : ''} this month`;
+        rangeSummaryEl.textContent = `${cnt} event${cnt !== 1 ? 's' : ''} this month`;
 
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const lastDateOfMonth = new Date(year, month + 1, 0).getDate();
-        const lastDateOfPrevMonth = new Date(year, month, 0).getDate();
+        const firstDay = new Date(y, m, 1).getDay();
+        const lastDate = new Date(y, m+1, 0).getDate();
+        const prevLast = new Date(y, m, 0).getDate();
 
-        // Previous month's tail
-        for (let i = firstDayOfMonth; i > 0; i--) {
-          const day = lastDateOfPrevMonth - i + 1;
-          const date = new Date(year, month - 1, day);
-          calendarGridEl.appendChild(createDayCell(day, date, false));
+        // previous month's tail
+        for (let i = firstDay; i > 0; i--) {
+          const day = prevLast - i + 1;
+          const date = new Date(y, m-1, day);
+          grid.appendChild(makeCell(day, date, false));
         }
 
-        // Current month days
-        for (let d = 1; d <= lastDateOfMonth; d++) {
-          const date = new Date(year, month, d);
-          calendarGridEl.appendChild(createDayCell(d, date, true));
+        // current month
+        for (let d = 1; d <= lastDate; d++) {
+          const date = new Date(y, m, d);
+          grid.appendChild(makeCell(d, date, true));
         }
 
-        // Next month's head
-        const totalCells = firstDayOfMonth + lastDateOfMonth;
-        const nextMonthDays = (7 - totalCells % 7) % 7;
-        for (let d = 1; d <= nextMonthDays; d++) {
-          const date = new Date(year, month + 1, d);
-          calendarGridEl.appendChild(createDayCell(d, date, false));
+        // next month's head
+        const total = firstDay + lastDate;
+        const nextDays = (7 - total % 7) % 7;
+        for (let d = 1; d <= nextDays; d++) {
+          const date = new Date(y, m+1, d);
+          grid.appendChild(makeCell(d, date, false));
         }
       }
 
-      function createDayCell(dayNumber, date, isCurrentMonth) {
-        const cell = document.createElement('div');
-        cell.className = 'relative rounded-xl p-3 min-h-[100px] bg-white border border-transparent hover:shadow-sm transition';
-
-        if (!isCurrentMonth) {
-          cell.classList.add('opacity-60', 'bg-slate-50');
-        }
-
-        const topRow = document.createElement('div');
-        topRow.className = 'flex items-start justify-between gap-2';
-
-        const dateBadge = document.createElement('div');
-        dateBadge.className = 'text-sm font-semibold w-8 h-8 flex items-center justify-center rounded-full';
-        dateBadge.textContent = dayNumber;
-
-        // Highlight today
-        const now = new Date();
-        if (date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
-          dateBadge.classList.add('bg-gradient-to-r', 'from-indigo-600', 'to-blue-500', 'text-white', 'shadow');
-        } else if (isCurrentMonth) {
-          dateBadge.classList.add('text-slate-700');
-        } else {
-          dateBadge.classList.add('text-slate-400');
-        }
-
-        topRow.appendChild(dateBadge);
-
-        // small indicator for number of events
+      function makeCell(num, date, inMonth) {
         const key = date.toDateString();
         const dayEvents = eventsByDate[key] || [];
-        if (dayEvents.length > 0) {
-          const countEl = document.createElement('div');
-          countEl.className = 'text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full';
-          countEl.textContent = `${dayEvents.length} event${dayEvents.length !== 1 ? 's' : ''}`;
-          topRow.appendChild(countEl);
+
+        const cell = document.createElement('div');
+        cell.className = 'day-cell rounded-md p-2 bg-white border hover:shadow-sm transition text-xs flex flex-col justify-start';
+        if (!inMonth) cell.classList.add('opacity-60', 'bg-gray-50');
+
+        // top: day number + dot if events
+        const top = document.createElement('div');
+        top.className = 'flex items-start justify-between';
+
+        const numEl = document.createElement('div');
+        numEl.className = 'text-sm font-semibold';
+        const today = new Date();
+        if (date.getDate()===today.getDate() && date.getMonth()===today.getMonth() && date.getFullYear()===today.getFullYear()) {
+          numEl.classList.add('px-2','py-0.5','rounded','bg-indigo-600','text-white','text-[12px]');
+        } else {
+          numEl.classList.add('text-gray-700');
+        }
+        numEl.textContent = num;
+        top.appendChild(numEl);
+
+        if (dayEvents.length) {
+          const dot = document.createElement('div');
+          dot.className = 'text-[11px] text-gray-500';
+          dot.textContent = `${dayEvents.length}`;
+          top.appendChild(dot);
           cell.classList.add('cursor-pointer');
         }
+        cell.appendChild(top);
 
-        cell.appendChild(topRow);
+        // events list (compact: up to 2)
+        if (dayEvents.length) {
+          const list = document.createElement('div');
+          list.className = 'mt-2 flex flex-col gap-1';
 
-        // Event badges (max 3)
-        if (dayEvents.length > 0) {
-          const eventsContainer = document.createElement('div');
-          eventsContainer.className = 'mt-3 flex flex-col gap-2';
+          dayEvents.slice(0,2).forEach(ev => {
+            const badge = document.createElement('div');
+            const classes = colorMap[ev.color] || colorMap.blue;
+            badge.className = `flex items-center gap-2 p-1 rounded text-[12px] ${classes} border-l-4`;
+            badge.title = `${ev.title} • ${ev.time} • ${ev.location}`;
 
-          dayEvents.slice(0, 3).forEach(ev => {
-            const colors = colorClasses[ev.color] || colorClasses.blue;
-            const evEl = document.createElement('div');
-            evEl.className = `flex items-center gap-2 p-2 rounded-md border-l-4 ${colors.badge} ${colors.border} truncate-2`;
-            evEl.title = `${ev.title} • ${ev.time} • ${ev.location}`;
-            const left = document.createElement('div');
-            left.className = 'w-2 h-2 rounded-full';
-            if (ev.color === 'blue') left.classList.add('bg-blue-500');
-            if (ev.color === 'green') left.classList.add('bg-green-500');
-            if (ev.color === 'yellow') left.classList.add('bg-amber-500');
-            if (ev.color === 'purple') left.classList.add('bg-purple-500');
-            if (ev.color === 'red') left.classList.add('bg-red-500');
+            const colorDot = document.createElement('span');
+            colorDot.className = 'w-2 h-2 rounded-full';
+            if (ev.color==='blue') colorDot.classList.add('bg-blue-600');
+            if (ev.color==='green') colorDot.classList.add('bg-green-600');
+            if (ev.color==='amber') colorDot.classList.add('bg-amber-600');
+            if (ev.color==='purple') colorDot.classList.add('bg-purple-600');
+            if (ev.color==='red') colorDot.classList.add('bg-red-600');
 
-            const titleWrap = document.createElement('div');
-            titleWrap.className = 'text-xs md:text-sm truncate';
-            titleWrap.innerHTML = `<div class="font-semibold text-slate-800">${ev.title}</div><div class="text-[11px] text-slate-600">${ev.time} • ${ev.location}</div>`;
+            const txt = document.createElement('span');
+            txt.className = 'truncate-1';
+            txt.textContent = ev.title;
 
-            evEl.appendChild(left);
-            evEl.appendChild(titleWrap);
-            eventsContainer.appendChild(evEl);
+            badge.appendChild(colorDot);
+            badge.appendChild(txt);
+            list.appendChild(badge);
           });
 
-          if (dayEvents.length > 3) {
+          if (dayEvents.length > 2) {
             const more = document.createElement('div');
-            more.className = 'text-xs text-slate-500 text-center';
-            more.textContent = `+${dayEvents.length - 3} more`;
-            eventsContainer.appendChild(more);
+            more.className = 'text-xs text-gray-500 mt-1';
+            more.textContent = `+${dayEvents.length-2} more`;
+            list.appendChild(more);
           }
+          cell.appendChild(list);
 
-          cell.appendChild(eventsContainer);
-          // click to open modal with full list
-          cell.addEventListener('click', () => showEventModal(date, dayEvents));
+          cell.addEventListener('click', () => openModal(date, dayEvents));
         }
 
         return cell;
       }
 
-      function showEventModal(date, events) {
-        modalDateEl.textContent = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        modalSubEl.textContent = `${events.length} event${events.length !== 1 ? 's' : ''}`;
-        modalEventsEl.innerHTML = '';
-
+      function openModal(date, events) {
+        modalDate.textContent = date.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+        modalSub.textContent = `${events.length} event${events.length!==1?'s':''}`;
+        modalEvents.innerHTML = '';
         events.forEach(ev => {
-          const colors = colorClasses[ev.color] || colorClasses.blue;
-          const card = document.createElement('div');
-          card.className = `mb-4 p-4 rounded-lg border-l-4 ${colors.border} bg-white soft-shadow`;
-
-          card.innerHTML = `
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h4 class="text-base font-bold text-slate-800">${ev.title}</h4>
-                <div class="mt-1 text-sm text-slate-600">${ev.instructor} • ${ev.location}</div>
-              </div>
-              <div class="text-sm text-slate-700 font-medium">${ev.time}</div>
-            </div>
-          `;
-          modalEventsEl.appendChild(card);
+          const wrap = document.createElement('div');
+          wrap.className = 'mb-3 p-3 rounded border-l-4 bg-white text-sm';
+          const cls = colorMap[ev.color] ? colorMap[ev.color].split(' ')[0] : 'bg-blue-100';
+          wrap.className += ' ' + (colorMap[ev.color] ? colorMap[ev.color] : colorMap.blue) + ' border-l-4';
+          wrap.innerHTML = `<div class="font-semibold text-gray-800">${ev.title}</div>
+                            <div class="text-xs text-gray-600 mt-1">${ev.time} • ${ev.location} • ${ev.instructor}</div>`;
+          modalEvents.appendChild(wrap);
         });
 
-        // show modal
-        eventModal.classList.remove('hidden');
-        eventModal.classList.add('flex');
-        // animate
-        setTimeout(() => {
-          modalContent.classList.remove('opacity-0', 'scale-95');
-          modalContent.classList.add('opacity-100', 'scale-100');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(()=> {
+          modalContent.classList.remove('opacity-0','scale-95');
+          modalContent.classList.add('opacity-100','scale-100');
         }, 10);
       }
 
-      function hideModal() {
-        modalContent.classList.remove('opacity-100', 'scale-100');
-        modalContent.classList.add('opacity-0', 'scale-95');
+      function close() {
+        modalContent.classList.remove('opacity-100','scale-100');
+        modalContent.classList.add('opacity-0','scale-95');
         setTimeout(() => {
-          eventModal.classList.add('hidden');
-          eventModal.classList.remove('flex');
-        }, 180);
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }, 150);
       }
 
-      // -----------------------
-      // Event listeners
-      // -----------------------
-      prevMonthBtn.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-      });
+      // listeners
+      prevBtn.addEventListener('click', () => { current.setMonth(current.getMonth()-1); render(); });
+      nextBtn.addEventListener('click', () => { current.setMonth(current.getMonth()+1); render(); });
+      todayBtn.addEventListener('click', () => { current = new Date(); render(); });
 
-      nextMonthBtn.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-      });
+      closeModal.addEventListener('click', close);
+      modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
 
-      todayBtn.addEventListener('click', () => {
-        currentDate = new Date();
-        renderCalendar();
-      });
-
-      closeModalBtn.addEventListener('click', hideModal);
-      eventModal.addEventListener('click', (e) => {
-        if (e.target === eventModal) hideModal();
-      });
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !eventModal.classList.contains('hidden')) hideModal();
-      });
-
-      // Initial render (starts at the user's current month)
-      renderCalendar();
+      // initial render
+      render();
     });
   </script>
 </body>
