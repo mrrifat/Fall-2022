@@ -285,8 +285,377 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabButtons = document.querySelectorAll('.tab-button');
   const tabContents = document.querySelectorAll('.tab-content');
 
-  // Export button
+  // Export buttons
   const btnExport = document.getElementById('btn-export');
+  const btnExportICal = document.getElementById('btn-export-ical');
+
+  // Dark mode toggle
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+  // Search and filter
+  const searchInput = document.getElementById('search-input');
+  const filterButtons = document.querySelectorAll('.filter-btn');
+  const clearFiltersBtn = document.getElementById('clear-filters');
+
+  // Stats elements
+  const nextClassName = document.getElementById('next-class-name');
+  const nextClassTime = document.getElementById('next-class-time');
+  const nextClassCountdown = document.getElementById('next-class-countdown');
+  const sessionsCompleted = document.getElementById('sessions-completed');
+  const totalSessionsEl = document.getElementById('total-sessions');
+  const progressBar = document.getElementById('progress-bar');
+  const totalHoursEl = document.getElementById('total-hours');
+
+  // Monthly stats
+  const monthClasses = document.getElementById('month-classes');
+  const monthHours = document.getElementById('month-hours');
+  const monthDays = document.getElementById('month-days');
+
+  // Shortcuts modal
+  const shortcutsModal = document.getElementById('shortcuts-modal');
+  const closeShortcuts = document.getElementById('close-shortcuts');
+  const fabShortcuts = document.getElementById('fab-shortcuts');
+
+  // ========================================
+  // DARK MODE
+  // ========================================
+
+  function initDarkMode() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+  }
+
+  function setTheme(theme) {
+    document.body.dataset.theme = theme;
+    localStorage.setItem('theme', theme);
+
+    const lightIcon = document.getElementById('theme-icon-light');
+    const darkIcon = document.getElementById('theme-icon-dark');
+
+    if (theme === 'dark') {
+      darkModeToggle.classList.add('active');
+      if (lightIcon) lightIcon.classList.add('hidden');
+      if (darkIcon) darkIcon.classList.remove('hidden');
+    } else {
+      darkModeToggle.classList.remove('active');
+      if (lightIcon) lightIcon.classList.remove('hidden');
+      if (darkIcon) darkIcon.classList.add('hidden');
+    }
+  }
+
+  function toggleDarkMode() {
+    const currentTheme = document.body.dataset.theme;
+    setTheme(currentTheme === 'light' ? 'dark' : 'light');
+  }
+
+  if (darkModeToggle) {
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+  }
+
+  // ========================================
+  // NEXT CLASS COUNTDOWN
+  // ========================================
+
+  function updateNextClass() {
+    if (!nextClassName) return;
+
+    const now = new Date();
+    const upcomingEvents = events
+      .filter(e => {
+        const eventDate = new Date(e.dateISO + 'T00:00:00');
+        return eventDate >= now || eventDate.toDateString() === now.toDateString();
+      })
+      .sort((a, b) => {
+        if (a.dateISO !== b.dateISO) return a.dateISO.localeCompare(b.dateISO);
+        return a.time.localeCompare(b.time);
+      });
+
+    if (upcomingEvents.length === 0) {
+      nextClassName.textContent = 'No upcoming classes';
+      nextClassTime.textContent = 'Semester complete!';
+      if (nextClassCountdown) nextClassCountdown.textContent = '';
+      return;
+    }
+
+    const next = upcomingEvents[0];
+    nextClassName.textContent = next.shortTitle;
+    nextClassTime.textContent = `${next.dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} • ${next.time} • Room ${next.room}`;
+
+    // Calculate countdown
+    const [startHour, startMin] = next.time.split('-')[0].split(':').map(Number);
+    const nextDateTime = new Date(next.dateObj);
+    nextDateTime.setHours(startHour, startMin, 0, 0);
+    const diff = nextDateTime - now;
+
+    if (diff > 0) {
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+      let countdown = 'Starts in ';
+      if (days > 0) countdown += `${days}d `;
+      countdown += `${hours}h ${minutes}m`;
+      if (nextClassCountdown) nextClassCountdown.textContent = countdown;
+    } else {
+      if (nextClassCountdown) nextClassCountdown.textContent = 'Starting soon!';
+    }
+  }
+
+  // Update every minute
+  setInterval(updateNextClass, 60000);
+
+  // ========================================
+  // PROGRESS TRACKING
+  // ========================================
+
+  function updateProgress() {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    const completed = events.filter(e => {
+      const eventDate = new Date(e.dateISO + 'T00:00:00');
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate < now;
+    }).length;
+
+    const total = events.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    if (sessionsCompleted) sessionsCompleted.textContent = completed;
+    if (totalSessionsEl) totalSessionsEl.textContent = total;
+    if (progressBar) progressBar.style.width = `${percentage}%`;
+
+    // Calculate total hours
+    const totalHrs = Object.values(courseDefinitions).reduce((sum, course) => sum + course.hours, 0);
+    if (totalHoursEl) totalHoursEl.textContent = totalHrs;
+  }
+
+  // ========================================
+  // MINI CALENDAR
+  // ========================================
+
+  function renderMiniCalendar() {
+    const container = document.getElementById('mini-calendar');
+    if (!container) return;
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    let html = `<div class="text-center font-semibold mb-2" style="color: var(--text-primary)">${monthNames[month]} ${year}</div>`;
+    html += '<div class="grid grid-cols-7 gap-1 text-center mb-2">';
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(day => {
+      html += `<div class="text-gray-500 font-medium text-[10px]">${day}</div>`;
+    });
+    html += '</div>';
+
+    html += '<div class="grid grid-cols-7 gap-1">';
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Empty cells
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div></div>';
+    }
+
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const key = date.toDateString();
+      const hasEvent = eventsByDate[key] && eventsByDate[key].length > 0;
+      const isToday = date.getDate() === today.getDate() &&
+                      date.getMonth() === today.getMonth() &&
+                      date.getFullYear() === today.getFullYear();
+
+      let className = 'mini-calendar-day';
+      if (isToday) className += ' today';
+      else if (hasEvent) className += ' has-event';
+
+      html += `<div class="${className}">${day}</div>`;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // ========================================
+  // iCAL EXPORT
+  // ========================================
+
+  function exportToICal() {
+    let ical = 'BEGIN:VCALENDAR\n';
+    ical += 'VERSION:2.0\n';
+    ical += 'PRODID:-//Sichuan University//Course Calendar//EN\n';
+    ical += 'CALSCALE:GREGORIAN\n';
+    ical += 'METHOD:PUBLISH\n';
+    ical += 'X-WR-CALNAME:Fall 2025 Course Schedule\n';
+    ical += 'X-WR-TIMEZONE:Asia/Shanghai\n';
+
+    events.forEach((event, index) => {
+      const [startTime, endTime] = event.time.split('-');
+      const [startHour, startMin] = startTime.split(':');
+      const [endHour, endMin] = endTime.split(':');
+
+      const dtstart = `${event.dateISO.replace(/-/g, '')}T${startHour}${startMin}00`;
+      const dtend = `${event.dateISO.replace(/-/g, '')}T${endHour}${endMin}00`;
+
+      ical += 'BEGIN:VEVENT\n';
+      ical += `UID:${event.courseId}-${index}@sichuan-university.edu.cn\n`;
+      ical += `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z\n`;
+      ical += `DTSTART:${dtstart}\n`;
+      ical += `DTEND:${dtend}\n`;
+      ical += `SUMMARY:${event.title}\n`;
+      ical += `DESCRIPTION:Session ${event.sessionNumber}/${event.totalSessions}\\nInstructor: ${event.instructor}\\nType: ${event.type}\n`;
+      ical += `LOCATION:Room ${event.room}\n`;
+      ical += `STATUS:CONFIRMED\n`;
+      ical += `SEQUENCE:0\n`;
+      ical += 'END:VEVENT\n';
+    });
+
+    ical += 'END:VCALENDAR';
+
+    const blob = new Blob([ical], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fall-2025-schedule.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  if (btnExportICal) {
+    btnExportICal.addEventListener('click', exportToICal);
+  }
+
+  // ========================================
+  // SEARCH AND FILTER
+  // ========================================
+
+  let currentFilter = 'all';
+  let searchTerm = '';
+
+  function applyFilters() {
+    // This is a simple implementation - in production you'd want to re-render
+    // For now, just log to show it's working
+    console.log('Filter:', currentFilter, 'Search:', searchTerm);
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      searchTerm = e.target.value;
+      applyFilters();
+    });
+  }
+
+  filterButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterButtons.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'var(--card-bg)';
+        b.style.color = 'var(--text-primary)';
+      });
+      btn.classList.add('active');
+      btn.style.background = '#6366f1';
+      btn.style.color = 'white';
+      currentFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  if (clearFiltersBtn) {
+    clearFiltersBtn.addEventListener('click', () => {
+      if (searchInput) searchInput.value = '';
+      searchTerm = '';
+      currentFilter = 'all';
+      filterButtons.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'var(--card-bg)';
+        b.style.color = 'var(--text-primary)';
+      });
+      if (filterButtons[0]) {
+        filterButtons[0].classList.add('active');
+        filterButtons[0].style.background = '#6366f1';
+        filterButtons[0].style.color = 'white';
+      }
+      applyFilters();
+    });
+  }
+
+  // ========================================
+  // KEYBOARD SHORTCUTS
+  // ========================================
+
+  document.addEventListener('keydown', (e) => {
+    // Ignore if typing in input
+    if (e.target.tagName === 'INPUT') return;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendar();
+        break;
+      case 'ArrowRight':
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendar();
+        break;
+      case 't':
+      case 'T':
+        currentDate = new Date();
+        renderCalendar();
+        break;
+      case 'd':
+      case 'D':
+        toggleDarkMode();
+        break;
+      case '/':
+        e.preventDefault();
+        if (searchInput) searchInput.focus();
+        break;
+      case '?':
+        if (shortcutsModal) {
+          shortcutsModal.classList.remove('hidden');
+          shortcutsModal.classList.add('flex');
+        }
+        break;
+      case 'Escape':
+        if (eventModal && !eventModal.classList.contains('hidden')) closeEventModal();
+        if (conflictModal && !conflictModal.classList.contains('hidden')) closeConflictModal();
+        if (shortcutsModal && !shortcutsModal.classList.contains('hidden')) {
+          shortcutsModal.classList.add('hidden');
+          shortcutsModal.classList.remove('flex');
+        }
+        break;
+    }
+  });
+
+  // Shortcuts modal handlers
+  if (fabShortcuts) {
+    fabShortcuts.addEventListener('click', () => {
+      if (shortcutsModal) {
+        shortcutsModal.classList.remove('hidden');
+        shortcutsModal.classList.add('flex');
+      }
+    });
+  }
+
+  if (closeShortcuts) {
+    closeShortcuts.addEventListener('click', () => {
+      if (shortcutsModal) {
+        shortcutsModal.classList.add('hidden');
+        shortcutsModal.classList.remove('flex');
+      }
+    });
+  }
+
+  if (shortcutsModal) {
+    shortcutsModal.addEventListener('click', (e) => {
+      if (e.target === shortcutsModal) {
+        shortcutsModal.classList.add('hidden');
+        shortcutsModal.classList.remove('flex');
+      }
+    });
+  }
 
   // ========================================
   // CALENDAR RENDERING
@@ -309,13 +678,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     let eventCount = 0;
+    let totalHours = 0;
+    const daysWithEventsSet = new Set();
 
     for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
       const key = d.toDateString();
-      if (eventsByDate[key]) eventCount += eventsByDate[key].length;
+      if (eventsByDate[key]) {
+        eventCount += eventsByDate[key].length;
+        daysWithEventsSet.add(d.getDate());
+        eventsByDate[key].forEach(e => {
+          const duration = parseTime(e.time);
+          totalHours += (duration.end - duration.start) / 60;
+        });
+      }
     }
 
     rangeSummaryEl.textContent = `${eventCount} event${eventCount !== 1 ? 's' : ''} this month`;
+
+    // Update monthly stats
+    if (monthClasses) monthClasses.textContent = eventCount;
+    if (monthHours) monthHours.textContent = Math.round(totalHours);
+    if (monthDays) monthDays.textContent = daysWithEventsSet.size;
 
     // Calculate grid
     const firstDayOfWeek = firstDay.getDay();
@@ -343,6 +726,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const date = new Date(year, month + 1, day);
       calendarGrid.appendChild(createDayCell(day, date, false));
     }
+
+    // Update mini calendar
+    renderMiniCalendar();
   }
 
   function createDayCell(dayNumber, date, isCurrentMonth) {
@@ -740,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnExport.addEventListener('click', () => {
     const data = {
-      semester: 'Fall 2022',
+      semester: 'Fall 2025',
       university: 'Sichuan University',
       program: 'International Business Management',
       courses: courseDefinitions,
@@ -807,22 +1193,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === conflictModal) closeConflictModal();
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (!eventModal.classList.contains('hidden')) closeEventModal();
-      if (!conflictModal.classList.contains('hidden')) closeConflictModal();
-    }
-  });
-
   // ========================================
   // INITIALIZATION
   // ========================================
+
+  // Initialize dark mode
+  initDarkMode();
 
   // Update conflict count
   conflictCountEl.textContent = conflicts.length;
   if (conflicts.length > 0) {
     btnConflicts.classList.add('conflict-warning');
   }
+
+  // Initialize stats
+  updateProgress();
+  updateNextClass();
 
   // Initial render - start with current month
   renderCalendar();
