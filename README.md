@@ -1,26 +1,62 @@
-# Fall 2025 Course Calendar
+# Fall 2025 Course Calendar - Enhanced Edition
 
-A modern, interactive course calendar application for Sichuan University's International Business Management program. Features a beautiful Proton Calendar-inspired interface with comprehensive schedule management capabilities.
+A next-generation, feature-rich course calendar application for Sichuan University's International Business Management program. Features a beautiful Proton Calendar-inspired interface with comprehensive schedule management capabilities, dark mode, search & filter, live countdown, progress tracking, and much more!
 
-## Features
+## 🎨 Enhanced Features (NEW!)
+
+### 🌓 Dark Mode
+- Smooth theme toggle with localStorage persistence
+- Beautiful dark color scheme optimized for low-light environments
+- All UI elements adapt seamlessly
+
+### 🔍 Smart Search & Filter
+- Real-time search across courses, instructors, and rooms
+- Filter by course type (All/Compulsory/Elective)
+- Instant results with visual highlighting
+
+### ⏱️ Live Countdown Widget
+- Real-time countdown to your next class
+- Shows upcoming class details and time remaining
+- Updates every minute automatically
+
+### 📊 Progress Tracking
+- Visual progress bars showing sessions completed
+- Real-time statistics dashboard
+- Per-course progress visualization
 
 ### 📅 Calendar Views
 - **Month View**: Interactive monthly calendar with color-coded course events
 - **Weekly Schedule**: Organized weekly overview showing all recurring classes
 - **Course Details**: Comprehensive breakdown of all courses with session schedules
+- **Statistics View**: Detailed analytics and progress insights (NEW!)
+- **Mini Calendar**: Quick navigator in sidebar (NEW!)
 
 ### 🎨 Modern Design
 - Proton Calendar-inspired interface
 - Beautiful gradient backgrounds and glass-morphism effects
-- Smooth animations and transitions
-- Responsive design for all screen sizes
+- Smooth animations and transitions with staggered loading
+- Fully responsive design for desktop, tablet, and mobile
 - Custom color coding for each course
+- Dark mode with automatic theme persistence
+- Floating action buttons with tooltips
+- Glass-morphism cards with blur effects
 
 ### 🔍 Smart Features
 - **Conflict Detection**: Automatically detects and highlights schedule conflicts
 - **Event Details**: Click any day to view detailed class information
 - **Session Tracking**: Shows session numbers and progress for each course
-- **Export Functionality**: Export your entire schedule as JSON
+- **Export Functionality**: Export as JSON or iCal format (NEW!)
+- **Keyboard Shortcuts**: Navigate faster with hotkeys (NEW!)
+- **Mini Calendar Navigator**: Quick month overview in sidebar (NEW!)
+- **Monthly Statistics**: Classes, hours, and days breakdown (NEW!)
+
+### ⌨️ Keyboard Shortcuts (NEW!)
+- `←` / `→` - Navigate between months
+- `T` - Jump to today
+- `/` - Focus search box
+- `D` - Toggle dark mode
+- `?` - Show keyboard shortcuts help
+- `Esc` - Close modals
 
 ### 📚 Course Information
 
@@ -62,17 +98,24 @@ A modern, interactive course calendar application for Sichuan University's Inter
    - Various days in October, 13:00-17:00
    - Room 302
 
-## Usage
+## 🚀 Usage
 
 Simply open `index.html` in a modern web browser. No build process or server required!
 
-### Navigation
-- Use arrow buttons to navigate between months
-- Click "Today" to return to current date
-- Click any day with events to view details
-- Switch between Calendar, Weekly, and Course Detail views using tabs
-- Click "Conflicts" button to see any schedule overlaps
-- Click "Export Data" to download schedule as JSON
+### Navigation & Controls
+- **Month Navigation**: Use arrow buttons or `←` `→` keys to browse months
+- **Today Button**: Quickly return to current date with one click or press `T`
+- **Day Details**: Click any day with events to see full class information
+- **Tab Views**: Switch between Calendar, Weekly, Course Details, and Statistics
+- **Dark Mode**: Toggle theme with the sun/moon icon or press `D`
+- **Search**: Type `/` to focus search box instantly
+- **Filters**: Filter by All/Compulsory/Elective courses
+- **Keyboard Shortcuts**: Press `?` to see all available hotkeys
+
+### Export Options
+- **JSON Export**: Download complete schedule data as JSON
+- **iCal Export**: Generate `.ics` file for Google Calendar, Apple Calendar, Outlook, etc.
+- **Conflict Report**: View and analyze any schedule overlaps
 
 ## Technical Details
 

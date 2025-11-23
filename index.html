@@ -7,41 +7,75 @@
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    :root {
+      --bg-primary: #f9fafb;
+      --bg-gradient-start: #667eea;
+      --bg-gradient-end: #764ba2;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --border-color: #e5e7eb;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0f172a;
+      --bg-gradient-start: #1e293b;
+      --bg-gradient-end: #0f172a;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --card-bg: rgba(30, 41, 59, 0.95);
+      --border-color: #334155;
+    }
+
     body {
       font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
       min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
     }
+
+    [data-theme="dark"] body {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, minmax(0, 1fr));
       gap: 1px;
-      background: #e5e7eb;
+      background: var(--border-color);
     }
+
     .day-cell {
       min-height: 120px;
-      background: white;
+      background: var(--card-bg);
+      transition: background 0.2s ease;
     }
-    .time-grid {
-      display: grid;
-      grid-template-columns: 80px 1fr;
+
+    [data-theme="dark"] .day-cell {
+      background: rgba(30, 41, 59, 0.8);
     }
-    .hour-slot {
-      min-height: 60px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    /* scrollbar */
+
+    /* Custom scrollbar */
     .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
     .custom-scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,.4); border-radius: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: rgba(241,245,249,.5); }
 
+    [data-theme="dark"] .custom-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,.4); }
+    [data-theme="dark"] .custom-scroll::-webkit-scrollbar-track { background: rgba(15,23,42,.5); }
+
     .glass-card {
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--card-bg);
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    [data-theme="dark"] .glass-card {
+      background: rgba(30, 41, 59, 0.95);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     .event-badge {
@@ -58,6 +92,7 @@
       padding: 0.75rem 1.5rem;
       font-weight: 500;
       transition: all 0.2s;
+      color: var(--text-secondary);
     }
     .tab-button.active {
       color: #6366f1;
@@ -84,8 +119,33 @@
         transform: translateY(0);
       }
     }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
     .animate-slide-in {
       animation: slideIn 0.3s ease-out;
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .animate-scale-in {
+      animation: scaleIn 0.3s ease-out;
     }
 
     .conflict-warning {
@@ -96,33 +156,296 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
+
+    /* Progress circle */
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.35s;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* Countdown widget */
+    .countdown-widget {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    [data-theme="dark"] .countdown-widget {
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    }
+
+    /* Dark mode toggle */
+    .dark-mode-toggle {
+      position: relative;
+      width: 60px;
+      height: 30px;
+      background: #cbd5e1;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .dark-mode-toggle.active {
+      background: #4f46e5;
+    }
+
+    .dark-mode-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .dark-mode-toggle.active .dark-mode-toggle-thumb {
+      transform: translateX(30px);
+    }
+
+    /* Statistics cards */
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Search highlight */
+    .search-highlight {
+      background: #fef08a;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }
+
+    [data-theme="dark"] .search-highlight {
+      background: #854d0e;
+      color: #fef08a;
+    }
+
+    /* Floating action button */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 40;
+    }
+
+    .fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 30px rgba(102, 126, 234, 0.6);
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.5rem 1rem;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      margin-bottom: 0.5rem;
+    }
+
+    .tooltip:hover::after {
+      opacity: 1;
+    }
+
+    /* Mini calendar */
+    .mini-calendar {
+      font-size: 0.75rem;
+    }
+
+    .mini-calendar-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mini-calendar-day:hover {
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .mini-calendar-day.has-event {
+      background: rgba(99, 102, 241, 0.2);
+      font-weight: 600;
+    }
+
+    .mini-calendar-day.today {
+      background: #6366f1;
+      color: white;
+      font-weight: 700;
+    }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-8" data-theme="light">
   <div class="max-w-7xl mx-auto">
     <!-- Header -->
     <div class="glass-card rounded-2xl p-6 mb-6 animate-slide-in">
       <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Fall 2025 Course Calendar</h1>
-          <p class="text-gray-600 mt-1">Sichuan University - International Business Management</p>
+          <h1 class="text-3xl font-bold" style="color: var(--text-primary)">Fall 2025 Course Calendar</h1>
+          <p style="color: var(--text-secondary)" class="mt-1">Sichuan University - International Business Management</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
+          <!-- Dark Mode Toggle -->
+          <div class="dark-mode-toggle" id="dark-mode-toggle" data-tooltip="Toggle Dark Mode">
+            <div class="dark-mode-toggle-thumb">
+              <svg id="theme-icon-light" class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+              </svg>
+              <svg id="theme-icon-dark" class="w-4 h-4 text-indigo-600 hidden" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Settings Button -->
+          <button id="btn-settings" class="p-2 rounded-lg hover:bg-gray-100 transition tooltip" data-tooltip="Settings">
+            <svg class="w-5 h-5" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+
           <button id="btn-conflicts" class="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition font-medium text-sm flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <span id="conflict-count">0</span> Conflicts
           </button>
+
+          <button id="btn-export-ical" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-sm flex items-center gap-2 tooltip" data-tooltip="Add to Calendar">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            iCal
+          </button>
+
           <button id="btn-export" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Export Data
+            Export
           </button>
         </div>
       </div>
     </div>
 
+    <!-- Stats Dashboard -->
+    <div id="stats-dashboard" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 animate-slide-in" style="animation-delay: 0.1s">
+      <!-- Next Class Widget -->
+      <div class="glass-card rounded-xl p-5 countdown-widget text-white col-span-1 md:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold opacity-90">Next Class</h3>
+          <svg class="w-5 h-5 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div id="next-class-info">
+          <div class="text-2xl font-bold mb-1" id="next-class-name">Loading...</div>
+          <div class="text-sm opacity-90" id="next-class-time">Calculating...</div>
+          <div class="mt-3 text-xs opacity-75" id="next-class-countdown"></div>
+        </div>
+      </div>
+
+      <!-- Progress Stats -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold" style="color: var(--text-secondary)">Progress</h3>
+          <svg class="w-5 h-5" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold mb-1" style="color: var(--text-primary)" id="sessions-completed">0</div>
+        <div class="text-xs" style="color: var(--text-secondary)">of <span id="total-sessions">0</span> sessions</div>
+        <div class="mt-2 bg-gray-200 rounded-full h-2 overflow-hidden">
+          <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Total Hours -->
+      <div class="glass-card rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold" style="color: var(--text-secondary)">Total Hours</h3>
+          <svg class="w-5 h-5" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+        <div class="text-3xl font-bold mb-1" style="color: var(--text-primary)" id="total-hours">256</div>
+        <div class="text-xs" style="color: var(--text-secondary)">6 courses</div>
+      </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="glass-card rounded-2xl p-4 mb-6 animate-slide-in" style="animation-delay: 0.2s">
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="flex-1 min-w-[200px]">
+          <div class="relative">
+            <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="search-input" placeholder="Search courses, instructors, or rooms..."
+              class="w-full pl-10 pr-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 outline-none transition"
+              style="background: var(--card-bg); color: var(--text-primary); border-color: var(--border-color)">
+          </div>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <button class="filter-btn active px-4 py-2 rounded-lg font-medium text-sm transition" data-filter="all" style="background: #6366f1; color: white;">All</button>
+          <button class="filter-btn px-4 py-2 rounded-lg font-medium text-sm transition" data-filter="compulsory" style="background: var(--card-bg); color: var(--text-primary);">Compulsory</button>
+          <button class="filter-btn px-4 py-2 rounded-lg font-medium text-sm transition" data-filter="elective" style="background: var(--card-bg); color: var(--text-primary);">Elective</button>
+        </div>
+        <button id="clear-filters" class="px-4 py-2 rounded-lg font-medium text-sm transition" style="background: var(--card-bg); color: var(--text-secondary);">
+          <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Clear
+        </button>
+      </div>
+    </div>
+
     <!-- Tab Navigation -->
-    <div class="glass-card rounded-2xl mb-6 animate-slide-in" style="animation-delay: 0.1s">
-      <div class="flex border-b border-gray-200">
+    <div class="glass-card rounded-2xl mb-6 animate-slide-in" style="animation-delay: 0.3s">
+      <div class="flex border-b" style="border-color: var(--border-color)">
         <button class="tab-button active" data-tab="calendar">
           <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           Calendar View
@@ -135,43 +458,81 @@
           <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
           Course Details
         </button>
+        <button class="tab-button" data-tab="stats">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Statistics
+        </button>
       </div>
     </div>
 
     <!-- Calendar View -->
-    <div id="tab-calendar" class="tab-content animate-slide-in" style="animation-delay: 0.2s">
-      <div class="glass-card rounded-2xl overflow-hidden">
-        <!-- Calendar Header -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
-          <div class="flex items-center gap-4">
-            <button id="prev-month" class="p-2 rounded-lg hover:bg-gray-100 transition">
-              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <div>
-              <div id="month-year" class="text-lg font-semibold text-gray-900"></div>
-              <div id="range-summary" class="text-xs text-gray-500">Click a day to view details</div>
+    <div id="tab-calendar" class="tab-content animate-slide-in" style="animation-delay: 0.4s">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Mini Calendar & Navigator -->
+        <div class="lg:col-span-1">
+          <div class="glass-card rounded-2xl p-4 mb-4">
+            <h3 class="text-sm font-semibold mb-3" style="color: var(--text-primary)">Quick Navigator</h3>
+            <div id="mini-calendar" class="mini-calendar">
+              <!-- Generated by JS -->
             </div>
-            <button id="next-month" class="p-2 rounded-lg hover:bg-gray-100 transition">
-              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </button>
           </div>
-          <button id="today-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm">Today</button>
+
+          <!-- Quick Stats -->
+          <div class="glass-card rounded-2xl p-4">
+            <h3 class="text-sm font-semibold mb-3" style="color: var(--text-primary)">This Month</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span style="color: var(--text-secondary)">Classes</span>
+                <span class="font-bold" style="color: var(--text-primary)" id="month-classes">0</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span style="color: var(--text-secondary)">Hours</span>
+                <span class="font-bold" style="color: var(--text-primary)" id="month-hours">0</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span style="color: var(--text-secondary)">Days</span>
+                <span class="font-bold" style="color: var(--text-primary)" id="month-days">0</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Day Headers -->
-        <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-700 bg-gray-50 border-b border-gray-200">
-          <div class="py-3">Sunday</div>
-          <div class="py-3">Monday</div>
-          <div class="py-3">Tuesday</div>
-          <div class="py-3">Wednesday</div>
-          <div class="py-3">Thursday</div>
-          <div class="py-3">Friday</div>
-          <div class="py-3">Saturday</div>
-        </div>
+        <!-- Main Calendar -->
+        <div class="lg:col-span-3">
+          <div class="glass-card rounded-2xl overflow-hidden">
+            <!-- Calendar Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b" style="background: var(--card-bg); border-color: var(--border-color)">
+              <div class="flex items-center gap-4">
+                <button id="prev-month" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                  <svg class="w-5 h-5" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div>
+                  <div id="month-year" class="text-lg font-semibold" style="color: var(--text-primary)"></div>
+                  <div id="range-summary" class="text-xs" style="color: var(--text-secondary)">Click a day to view details</div>
+                </div>
+                <button id="next-month" class="p-2 rounded-lg hover:bg-gray-100 transition">
+                  <svg class="w-5 h-5" style="color: var(--text-secondary)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <button id="today-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm">Today</button>
+            </div>
 
-        <!-- Calendar Grid -->
-        <div id="calendar-grid" class="calendar-grid">
-          <!-- Generated by JS -->
+            <!-- Day Headers -->
+            <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-700 bg-gray-50 border-b" style="border-color: var(--border-color)">
+              <div class="py-3" style="color: var(--text-secondary)">Sunday</div>
+              <div class="py-3" style="color: var(--text-secondary)">Monday</div>
+              <div class="py-3" style="color: var(--text-secondary)">Tuesday</div>
+              <div class="py-3" style="color: var(--text-secondary)">Wednesday</div>
+              <div class="py-3" style="color: var(--text-secondary)">Thursday</div>
+              <div class="py-3" style="color: var(--text-secondary)">Friday</div>
+              <div class="py-3" style="color: var(--text-secondary)">Saturday</div>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div id="calendar-grid" class="calendar-grid">
+              <!-- Generated by JS -->
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -180,8 +541,8 @@
     <div id="tab-weekly" class="tab-content hidden">
       <div class="glass-card rounded-2xl p-6">
         <div class="mb-6">
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Weekly Schedule</h2>
-          <p class="text-gray-600">Overview of your weekly class schedule with time slots</p>
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary)">Weekly Schedule</h2>
+          <p style="color: var(--text-secondary)">Overview of your weekly class schedule with time slots</p>
         </div>
         <div id="weekly-schedule" class="custom-scroll overflow-x-auto">
           <!-- Generated by JS -->
@@ -193,10 +554,23 @@
     <div id="tab-courses" class="tab-content hidden">
       <div class="glass-card rounded-2xl p-6">
         <div class="mb-6">
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">Course Details & Breakdown</h2>
-          <p class="text-gray-600">Comprehensive information about all courses</p>
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary)">Course Details & Breakdown</h2>
+          <p style="color: var(--text-secondary)">Comprehensive information about all courses</p>
         </div>
         <div id="course-details" class="space-y-6">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics View -->
+    <div id="tab-stats" class="tab-content hidden">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold mb-2" style="color: var(--text-primary)">Statistics & Analytics</h2>
+          <p style="color: var(--text-secondary)">Detailed insights about your course schedule</p>
+        </div>
+        <div id="statistics-content" class="space-y-6">
           <!-- Generated by JS -->
         </div>
       </div>
@@ -205,13 +579,21 @@
     <!-- Footer -->
     <div class="mt-6 text-center">
       <p class="text-white text-sm opacity-90">Made with ❤️ by Rokon | Sichuan University 2025</p>
+      <p class="text-white text-xs opacity-75 mt-1">Press <kbd class="px-2 py-1 bg-white/20 rounded">?</kbd> for keyboard shortcuts</p>
     </div>
+  </div>
+
+  <!-- Floating Action Button -->
+  <div class="fab tooltip" data-tooltip="Keyboard Shortcuts" id="fab-shortcuts">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+    </svg>
   </div>
 
   <!-- Event Details Modal -->
   <div id="event-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-    <div id="modal-content" class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all duration-200 opacity-0 scale-95 overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-purple-600">
+    <div id="modal-content" class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all duration-200 opacity-0 scale-95 overflow-hidden" style="background: var(--card-bg)">
+      <div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-indigo-500 to-purple-600" style="border-color: var(--border-color)">
         <div class="text-white">
           <div id="modal-date" class="text-lg font-semibold"></div>
           <div id="modal-sub" class="text-sm opacity-90"></div>
@@ -228,8 +610,8 @@
 
   <!-- Conflict Modal -->
   <div id="conflict-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl transform transition-all duration-200 overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-red-50">
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl transform transition-all duration-200 overflow-hidden" style="background: var(--card-bg)">
+      <div class="flex items-center justify-between px-6 py-4 border-b bg-red-50" style="border-color: var(--border-color)">
         <div class="flex items-center gap-3">
           <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
           <div>
@@ -247,6 +629,47 @@
     </div>
   </div>
 
-  <script src="calendar.js?v=2025.1"></script>
+  <!-- Keyboard Shortcuts Modal -->
+  <div id="shortcuts-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl transform transition-all duration-200 overflow-hidden" style="background: var(--card-bg)">
+      <div class="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-indigo-500 to-purple-600">
+        <div class="text-white">
+          <div class="text-lg font-semibold">Keyboard Shortcuts</div>
+          <div class="text-sm opacity-90">Quick navigation tips</div>
+        </div>
+        <button id="close-shortcuts" class="p-2 rounded-lg text-white hover:bg-white/20 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-3">
+        <div class="flex items-center justify-between">
+          <span style="color: var(--text-secondary)">Previous Month</span>
+          <kbd class="px-3 py-1 rounded font-mono text-sm" style="background: var(--bg-primary); color: var(--text-primary)">←</kbd>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="color: var(--text-secondary)">Next Month</span>
+          <kbd class="px-3 py-1 rounded font-mono text-sm" style="background: var(--bg-primary); color: var(--text-primary)">→</kbd>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="color: var(--text-secondary)">Today</span>
+          <kbd class="px-3 py-1 rounded font-mono text-sm" style="background: var(--bg-primary); color: var(--text-primary)">T</kbd>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="color: var(--text-secondary)">Search</span>
+          <kbd class="px-3 py-1 rounded font-mono text-sm" style="background: var(--bg-primary); color: var(--text-primary)">/</kbd>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="color: var(--text-secondary)">Dark Mode</span>
+          <kbd class="px-3 py-1 rounded font-mono text-sm" style="background: var(--bg-primary); color: var(--text-primary)">D</kbd>
+        </div>
+        <div class="flex items-center justify-between">
+          <span style="color: var(--text-secondary)">Help</span>
+          <kbd class="px-3 py-1 rounded font-mono text-sm" style="background: var(--bg-primary); color: var(--text-primary)">?</kbd>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="calendar.js?v=2025.2"></script>
 </body>
 </html>
