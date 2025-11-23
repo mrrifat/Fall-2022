@@ -3,296 +3,250 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Class Schedule Calendar</title>
+  <title>Fall 2022 Course Calendar - Sichuan University</title>
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f3f4f6; }
-    .calendar-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-    .day-cell { min-height: 78px; }
-    /* modal scrollbar */
-    #modal-events::-webkit-scrollbar { width: 8px; }
-    #modal-events::-webkit-scrollbar-thumb { background: rgba(100,116,139,.4); border-radius:6px; }
-    /* small helper */
-    .truncate-1 { display: inline-block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 1px;
+      background: #e5e7eb;
+    }
+    .day-cell {
+      min-height: 120px;
+      background: white;
+    }
+    .time-grid {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+    }
+    .hour-slot {
+      min-height: 60px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    /* scrollbar */
+    .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,.4); border-radius: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: rgba(241,245,249,.5); }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .event-badge {
+      transition: all 0.2s ease;
+    }
+    .event-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Proton-inspired tabs */
+    .tab-button {
+      position: relative;
+      padding: 0.75rem 1.5rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .tab-button.active {
+      color: #6366f1;
+    }
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #6366f1;
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+
+    .conflict-warning {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
   </style>
 </head>
-<body>
-  <div class="max-w-4xl mx-auto p-4">
-    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-3 border-b">
+<body class="p-4 md:p-8">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="glass-card rounded-2xl p-6 mb-6 animate-slide-in">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Fall 2022 Course Calendar</h1>
+          <p class="text-gray-600 mt-1">Sichuan University - International Business Management</p>
+        </div>
         <div class="flex items-center gap-3">
-          <button id="prev-month" class="p-2 rounded-md hover:bg-gray-100" title="Previous month">
-            <svg class="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <button id="btn-conflicts" class="px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition font-medium text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span id="conflict-count">0</span> Conflicts
           </button>
-          <div>
-            <div id="month-year" class="text-sm font-semibold text-gray-800"></div>
-            <div id="range-summary" class="text-xs text-gray-500">Click a day to view events</div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button id="today" class="text-xs px-3 py-1 rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Today</button>
-          <button id="next-month" class="p-2 rounded-md hover:bg-gray-100" title="Next month">
-            <svg class="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          <button id="btn-export" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export Data
           </button>
         </div>
-      </div>
-
-      <div class="grid calendar-grid text-center text-xs font-medium text-gray-500 bg-gray-50 px-3 py-2">
-        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-      </div>
-
-      <div id="calendar-grid" class="grid calendar-grid gap-2 p-3">
-        <!-- days generated by JS -->
       </div>
     </div>
 
-    <p class="mt-3 text-center text-xs text-gray-500">Sichuan University — International Business Management. Made by Rokon</p>
-  </div>
-
-  <!-- Modal -->
-  <div id="event-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
-    <div id="modal-content" class="w-full max-w-md bg-white rounded-lg shadow transform transition duration-150 opacity-0 scale-95 overflow-hidden">
-      <div class="flex items-center justify-between px-4 py-3 border-b">
-        <div>
-          <div id="modal-date" class="text-sm font-semibold text-gray-800"></div>
-          <div id="modal-sub" class="text-xs text-gray-500"></div>
-        </div>
-        <button id="close-modal" class="p-2 rounded-md text-gray-600 hover:bg-gray-100">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <!-- Tab Navigation -->
+    <div class="glass-card rounded-2xl mb-6 animate-slide-in" style="animation-delay: 0.1s">
+      <div class="flex border-b border-gray-200">
+        <button class="tab-button active" data-tab="calendar">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Calendar View
+        </button>
+        <button class="tab-button" data-tab="weekly">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+          Weekly Schedule
+        </button>
+        <button class="tab-button" data-tab="courses">
+          <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          Course Details
         </button>
       </div>
-      <div id="modal-events" class="p-4 max-h-64 overflow-y-auto text-sm">
-        <!-- event cards -->
+    </div>
+
+    <!-- Calendar View -->
+    <div id="tab-calendar" class="tab-content animate-slide-in" style="animation-delay: 0.2s">
+      <div class="glass-card rounded-2xl overflow-hidden">
+        <!-- Calendar Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white">
+          <div class="flex items-center gap-4">
+            <button id="prev-month" class="p-2 rounded-lg hover:bg-gray-100 transition">
+              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div>
+              <div id="month-year" class="text-lg font-semibold text-gray-900"></div>
+              <div id="range-summary" class="text-xs text-gray-500">Click a day to view details</div>
+            </div>
+            <button id="next-month" class="p-2 rounded-lg hover:bg-gray-100 transition">
+              <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+          <button id="today-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium text-sm">Today</button>
+        </div>
+
+        <!-- Day Headers -->
+        <div class="grid grid-cols-7 text-center text-sm font-semibold text-gray-700 bg-gray-50 border-b border-gray-200">
+          <div class="py-3">Sunday</div>
+          <div class="py-3">Monday</div>
+          <div class="py-3">Tuesday</div>
+          <div class="py-3">Wednesday</div>
+          <div class="py-3">Thursday</div>
+          <div class="py-3">Friday</div>
+          <div class="py-3">Saturday</div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div id="calendar-grid" class="calendar-grid">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly Schedule View -->
+    <div id="tab-weekly" class="tab-content hidden">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Weekly Schedule</h2>
+          <p class="text-gray-600">Overview of your weekly class schedule with time slots</p>
+        </div>
+        <div id="weekly-schedule" class="custom-scroll overflow-x-auto">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Course Details View -->
+    <div id="tab-courses" class="tab-content hidden">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="mb-6">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Course Details & Breakdown</h2>
+          <p class="text-gray-600">Comprehensive information about all courses</p>
+        </div>
+        <div id="course-details" class="space-y-6">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-6 text-center">
+      <p class="text-white text-sm opacity-90">Made with ❤️ by Rokon | Sichuan University 2022</p>
+    </div>
+  </div>
+
+  <!-- Event Details Modal -->
+  <div id="event-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div id="modal-content" class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all duration-200 opacity-0 scale-95 overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-500 to-purple-600">
+        <div class="text-white">
+          <div id="modal-date" class="text-lg font-semibold"></div>
+          <div id="modal-sub" class="text-sm opacity-90"></div>
+        </div>
+        <button id="close-modal" class="p-2 rounded-lg text-white hover:bg-white/20 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="modal-events" class="p-6 max-h-96 overflow-y-auto custom-scroll">
+        <!-- Event cards -->
       </div>
     </div>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // --- Data (kept from original schedule) ---
-      const pad = n => String(n).padStart(2,'0');
-      const crm = ['9/11','9/18','9/25','10/16','10/23','10/30','11/6','11/13','11/20','11/27','12/4','12/11'];
-      const macro = crm.slice();
-      const market = ['9/10','9/17','9/24','10/15','10/22','10/29','11/5','11/12','11/19','11/26','12/3','12/10'];
-      const lit = ['9/22','9/29','10/13','10/20'];
-      const bm = ['9/19','10/13','10/15','10/17','10/20','10/21'];
+  <!-- Conflict Modal -->
+  <div id="conflict-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl transform transition-all duration-200 overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-red-50">
+        <div class="flex items-center gap-3">
+          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <div>
+            <div class="text-lg font-semibold text-red-900">Schedule Conflicts Detected</div>
+            <div class="text-sm text-red-700">The following courses have overlapping times</div>
+          </div>
+        </div>
+        <button id="close-conflict-modal" class="p-2 rounded-lg text-red-700 hover:bg-red-100 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="conflict-list" class="p-6 max-h-96 overflow-y-auto custom-scroll">
+        <!-- Conflict items -->
+      </div>
+    </div>
+  </div>
 
-      function build(dates, year, meta) {
-        return dates.map(s => {
-          const [m, day] = s.split('/').map(Number);
-          return Object.assign({ dateISO: `${year}-${pad(m)}-${pad(day)}` }, meta);
-        });
-      }
-
-      const YEAR = 2025;
-      const events = [
-        ...build(crm, YEAR, { title: 'Customer Relation Management', time: '18:30 - 21:30', location: '402', instructor: '廖成城', color: 'blue' })
-          .map(e => e.dateISO === `${YEAR}-09-18` ? Object.assign({}, e, { time: '19:00 - 21:30', location: '206' }) : e),
-        ...build(macro, YEAR, { title: 'Macroeconomics', time: '14:00 - 17:00', location: '510', instructor: '王克', color: 'green' }),
-        ...build(market, YEAR, { title: 'Market Survey', time: '09:00 - 12:00', location: '106', instructor: '靳菲', color: 'amber' }),
-        ...build(lit, YEAR, { title: 'Literature Reviewing and Thesis Writing', time: '19:00 - 22:00', location: '406', instructor: '刘锐', color: 'purple' }),
-        ...build(bm, YEAR, { title: 'Business Model and Enterprise Innovation', time: '13:00 - 17:00', location: '302', instructor: '孙含林', color: 'red' })
-      ];
-
-      // map by date string
-      const eventsByDate = events.reduce((acc,e) => {
-        const d = new Date(e.dateISO + 'T00:00:00');
-        const k = d.toDateString();
-        acc[k] = acc[k] || [];
-        acc[k].push(Object.assign({}, e, { dateObj: d }));
-        return acc;
-      }, {});
-      Object.values(eventsByDate).forEach(arr => arr.sort((a,b) => (a.time||'').localeCompare(b.time||'')));
-
-      const colorMap = {
-        blue: 'bg-blue-100 text-blue-800 border-blue-300',
-        green: 'bg-green-100 text-green-800 border-green-300',
-        amber: 'bg-amber-100 text-amber-800 border-amber-300',
-        purple: 'bg-purple-100 text-purple-800 border-purple-300',
-        red: 'bg-red-100 text-red-800 border-red-300'
-      };
-
-      // --- DOM refs ---
-      const monthYearEl = document.getElementById('month-year');
-      const rangeSummaryEl = document.getElementById('range-summary');
-      const grid = document.getElementById('calendar-grid');
-      const prevBtn = document.getElementById('prev-month');
-      const nextBtn = document.getElementById('next-month');
-      const todayBtn = document.getElementById('today');
-
-      const modal = document.getElementById('event-modal');
-      const modalContent = document.getElementById('modal-content');
-      const closeModal = document.getElementById('close-modal');
-      const modalDate = document.getElementById('modal-date');
-      const modalSub = document.getElementById('modal-sub');
-      const modalEvents = document.getElementById('modal-events');
-
-      // Start on user's current month
-      let current = new Date();
-
-      function render() {
-        grid.innerHTML = '';
-        const y = current.getFullYear();
-        const m = current.getMonth();
-
-        monthYearEl.textContent = current.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-
-        // count events in month
-        const start = new Date(y, m, 1), end = new Date(y, m+1, 0);
-        let cnt = 0;
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
-          const k = new Date(d).toDateString();
-          if (eventsByDate[k]) cnt += eventsByDate[k].length;
-        }
-        rangeSummaryEl.textContent = `${cnt} event${cnt !== 1 ? 's' : ''} this month`;
-
-        const firstDay = new Date(y, m, 1).getDay();
-        const lastDate = new Date(y, m+1, 0).getDate();
-        const prevLast = new Date(y, m, 0).getDate();
-
-        // previous month's tail
-        for (let i = firstDay; i > 0; i--) {
-          const day = prevLast - i + 1;
-          const date = new Date(y, m-1, day);
-          grid.appendChild(makeCell(day, date, false));
-        }
-
-        // current month
-        for (let d = 1; d <= lastDate; d++) {
-          const date = new Date(y, m, d);
-          grid.appendChild(makeCell(d, date, true));
-        }
-
-        // next month's head
-        const total = firstDay + lastDate;
-        const nextDays = (7 - total % 7) % 7;
-        for (let d = 1; d <= nextDays; d++) {
-          const date = new Date(y, m+1, d);
-          grid.appendChild(makeCell(d, date, false));
-        }
-      }
-
-      function makeCell(num, date, inMonth) {
-        const key = date.toDateString();
-        const dayEvents = eventsByDate[key] || [];
-
-        const cell = document.createElement('div');
-        cell.className = 'day-cell rounded-md p-2 bg-white border hover:shadow-sm transition text-xs flex flex-col justify-start';
-        if (!inMonth) cell.classList.add('opacity-60', 'bg-gray-50');
-
-        // top: day number + dot if events
-        const top = document.createElement('div');
-        top.className = 'flex items-start justify-between';
-
-        const numEl = document.createElement('div');
-        numEl.className = 'text-sm font-semibold';
-        const today = new Date();
-        if (date.getDate()===today.getDate() && date.getMonth()===today.getMonth() && date.getFullYear()===today.getFullYear()) {
-          numEl.classList.add('px-2','py-0.5','rounded','bg-indigo-600','text-white','text-[12px]');
-        } else {
-          numEl.classList.add('text-gray-700');
-        }
-        numEl.textContent = num;
-        top.appendChild(numEl);
-
-        if (dayEvents.length) {
-          const dot = document.createElement('div');
-          dot.className = 'text-[11px] text-gray-500';
-          dot.textContent = `${dayEvents.length}`;
-          top.appendChild(dot);
-          cell.classList.add('cursor-pointer');
-        }
-        cell.appendChild(top);
-
-        // events list (compact: up to 2)
-        if (dayEvents.length) {
-          const list = document.createElement('div');
-          list.className = 'mt-2 flex flex-col gap-1';
-
-          dayEvents.slice(0,2).forEach(ev => {
-            const badge = document.createElement('div');
-            const classes = colorMap[ev.color] || colorMap.blue;
-            badge.className = `flex items-center gap-2 p-1 rounded text-[12px] ${classes} border-l-4`;
-            badge.title = `${ev.title} • ${ev.time} • ${ev.location}`;
-
-            const colorDot = document.createElement('span');
-            colorDot.className = 'w-2 h-2 rounded-full';
-            if (ev.color==='blue') colorDot.classList.add('bg-blue-600');
-            if (ev.color==='green') colorDot.classList.add('bg-green-600');
-            if (ev.color==='amber') colorDot.classList.add('bg-amber-600');
-            if (ev.color==='purple') colorDot.classList.add('bg-purple-600');
-            if (ev.color==='red') colorDot.classList.add('bg-red-600');
-
-            const txt = document.createElement('span');
-            txt.className = 'truncate-1';
-            txt.textContent = ev.title;
-
-            badge.appendChild(colorDot);
-            badge.appendChild(txt);
-            list.appendChild(badge);
-          });
-
-          if (dayEvents.length > 2) {
-            const more = document.createElement('div');
-            more.className = 'text-xs text-gray-500 mt-1';
-            more.textContent = `+${dayEvents.length-2} more`;
-            list.appendChild(more);
-          }
-          cell.appendChild(list);
-
-          cell.addEventListener('click', () => openModal(date, dayEvents));
-        }
-
-        return cell;
-      }
-
-      function openModal(date, events) {
-        modalDate.textContent = date.toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' });
-        modalSub.textContent = `${events.length} event${events.length!==1?'s':''}`;
-        modalEvents.innerHTML = '';
-        events.forEach(ev => {
-          const wrap = document.createElement('div');
-          wrap.className = 'mb-3 p-3 rounded border-l-4 bg-white text-sm';
-          const cls = colorMap[ev.color] ? colorMap[ev.color].split(' ')[0] : 'bg-blue-100';
-          wrap.className += ' ' + (colorMap[ev.color] ? colorMap[ev.color] : colorMap.blue) + ' border-l-4';
-          wrap.innerHTML = `<div class="font-semibold text-gray-800">${ev.title}</div>
-                            <div class="text-xs text-gray-600 mt-1">${ev.time} • ${ev.location} • ${ev.instructor}</div>`;
-          modalEvents.appendChild(wrap);
-        });
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        setTimeout(()=> {
-          modalContent.classList.remove('opacity-0','scale-95');
-          modalContent.classList.add('opacity-100','scale-100');
-        }, 10);
-      }
-
-      function close() {
-        modalContent.classList.remove('opacity-100','scale-100');
-        modalContent.classList.add('opacity-0','scale-95');
-        setTimeout(() => {
-          modal.classList.add('hidden');
-          modal.classList.remove('flex');
-        }, 150);
-      }
-
-      // listeners
-      prevBtn.addEventListener('click', () => { current.setMonth(current.getMonth()-1); render(); });
-      nextBtn.addEventListener('click', () => { current.setMonth(current.getMonth()+1); render(); });
-      todayBtn.addEventListener('click', () => { current = new Date(); render(); });
-
-      closeModal.addEventListener('click', close);
-      modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
-      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) close(); });
-
-      // initial render
-      render();
-    });
-  </script>
+  <script src="calendar.js"></script>
 </body>
 </html>
