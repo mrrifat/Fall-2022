@@ -1,4 +1,4 @@
-// Course Calendar Application - Fall 2022
+// Course Calendar Application - Fall 2025
 // Sichuan University - International Business Management
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // DATA STRUCTURE & PROCESSING
   // ========================================
 
-  const YEAR = 2022;
+  const YEAR = 2025;
   const pad = n => String(n).padStart(2, '0');
 
   // Course definitions with complete metadata
@@ -772,7 +772,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'fall-2022-schedule.json';
+    a.download = 'fall-2025-schedule.json';
     a.click();
     URL.revokeObjectURL(url);
   });
@@ -824,10 +824,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnConflicts.classList.add('conflict-warning');
   }
 
-  // Initial render
-  renderCalendar();
-
-  // Start on September 2022
-  currentDate = new Date(2022, 8, 1); // September 2022
+  // Initial render - start with current month
   renderCalendar();
 });

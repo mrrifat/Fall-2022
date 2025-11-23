@@ -1,4 +1,4 @@
-# Fall 2022 Course Calendar
+# Fall 2025 Course Calendar
 
 A modern, interactive course calendar application for Sichuan University's International Business Management program. Features a beautiful Proton Calendar-inspired interface with comprehensive schedule management capabilities.
 
@@ -112,7 +112,7 @@ The export function provides a comprehensive JSON file including:
 
 ## Credits
 
-Created with ❤️ by Rokon for Sichuan University, Fall 2022 semester.
+Created with ❤️ by Rokon for Sichuan University, Fall 2025 semester.
 
 ## License
 
